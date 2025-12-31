@@ -599,6 +599,67 @@ app.post('/api/sites/:siteId/funnels/analyze', authenticateToken, async (req, re
 
         const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
 
+        // Initialize Stripe (placeholder secret, should be env var)
+        const Stripe = require('stripe');
+        const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+        // Note: User must set STRIPE_SECRET_KEY in their env
+
+        // Stripe Webhook Endpoint
+        app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+            const sig = req.headers['stripe-signature'];
+            const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+            let event;
+
+            try {
+                // If secrets aren't set, we can't verify signature, but we can't process either.
+                // For development/simplicity if env vars missing, we might skip signature (NOT REC FOR PROD).
+                // Here we assume strictly secure.
+                if (!endpointSecret || !process.env.STRIPE_SECRET_KEY) {
+                    console.error('Stripe env vars missing');
+                    return res.status(500).send('Configuration Error');
+                }
+                event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+            } catch (err) {
+                console.error(`Webhook Error: ${err.message}`);
+                return res.status(400).send(`Webhook Error: ${err.message}`);
+            }
+
+            // Handle the event
+            if (event.type === 'checkout.session.completed' || event.type === 'invoice.payment_succeeded') {
+                const session = event.data.object;
+
+                // Extract attribution data
+                // Priority: client_reference_id > metadata.visitor_id
+                const visitorId = session.client_reference_id || (session.metadata ? session.metadata.visitor_id : null);
+
+                if (visitorId) {
+                    const amount = session.amount_total ? session.amount_total / 100 : (session.amount_paid / 100);
+                    const currency = session.currency ? session.currency.toUpperCase() : 'USD';
+                    const email = session.customer_details ? session.customer_details.email : (session.customer_email || null);
+                    const siteId = session.metadata ? session.metadata.site_id : null;
+                    // Ideally site_id should be passed in metadata. If not, we might be blind.
+
+                    if (siteId) {
+                        try {
+                            const id = uuidv4();
+                            await query(`
+                        INSERT INTO payments (id, site_id, visitor_id, amount, currency, customer_email, created_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                     `, [id, siteId, visitorId, amount, currency, email]);
+                            console.log(`Payment recorded for visitor ${visitorId}: ${amount} ${currency}`);
+                        } catch (e) { console.error('Error saving payment', e); }
+                    } else {
+                        console.log('Payment received but no site_id in metadata');
+                    }
+                } else {
+                    console.log('Payment received but no visitor_id found');
+                }
+            }
+
+            res.json({ received: true });
+        });
+
         // Step 1: Base population
         let currentVisitors = new Set();
 
