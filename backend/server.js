@@ -586,6 +586,112 @@ app.get('/api/sites/:siteId/revenue', authenticateToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Error' }); }
 });
 
+// Funnel Analysis
+app.post('/api/sites/:siteId/funnels/analyze', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        const { steps, period = '30d' } = req.body;
+        // steps: [{ type: 'pageview'|'event', value: '/path'|'name' }]
+
+        if (!steps || steps.length < 2) return res.status(400).json({ error: 'At least 2 steps required' });
+
+        const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+        // Step 1: Base population
+        let currentVisitors = new Set();
+
+        // We'll execute sequential queries for this MVP logic (can be optimized to single CTE later)
+        // Step 1 query
+        const s1 = steps[0];
+        const q1Condition = s1.type === 'pageview' ? "path = $2 AND event_type = 'pageview'" : "event_name = $2 AND event_type != 'pageview'";
+
+        const step1Res = await query(`
+            SELECT DISTINCT visitor_id 
+            FROM events 
+            WHERE site_id = $1 AND ${q1Condition} AND timestamp >= NOW() - INTERVAL '${days} days'
+        `, [siteId, s1.value]);
+
+        let validVisitors = step1Res.rows.map(r => r.visitor_id);
+        const funnelResults = [{ step: s1.value, count: validVisitors.length, dropoff: 0 }];
+
+        // Subsequent steps
+        for (let i = 1; i < steps.length; i++) {
+            if (validVisitors.length === 0) {
+                funnelResults.push({ step: steps[i].value, count: 0, dropoff: 100 });
+                continue;
+            }
+
+            const step = steps[i];
+            const cond = step.type === 'pageview' ? "path = $2 AND event_type = 'pageview'" : "event_name = $2 AND event_type != 'pageview'";
+
+            // Check if these specific visitors did step i
+            // Optimization: In real prod, we'd check timestamp > prev_timestamp
+
+            const placeHolders = validVisitors.map((_, idx) => `$${idx + 3}`).join(',');
+            const stepRes = await query(`
+                SELECT DISTINCT visitor_id 
+                FROM events 
+                WHERE site_id = $1 AND ${cond} AND timestamp >= NOW() - INTERVAL '${days} days'
+                AND visitor_id IN (${placeHolders})
+            `, [siteId, step.value, ...validVisitors]);
+
+            const nextVisitors = stepRes.rows.map(r => r.visitor_id);
+            const dropoff = ((validVisitors.length - nextVisitors.length) / validVisitors.length) * 100;
+
+            funnelResults.push({ step: step.value, count: nextVisitors.length, dropoff: Math.round(dropoff) });
+            validVisitors = nextVisitors;
+        }
+
+        res.json(funnelResults);
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Error analyzing funnel' }); }
+});
+
+// Retention Analysis
+app.get('/api/sites/:siteId/retention', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        // Cohort by Week for last 8 weeks
+
+        const result = await query(`
+            WITH first_seen AS (
+                SELECT visitor_id, DATE_TRUNC('week', MIN(timestamp)) as cohort_week
+                FROM events
+                WHERE site_id = $1
+                GROUP BY visitor_id
+            ),
+            activity AS (
+                SELECT DISTINCT visitor_id, DATE_TRUNC('week', timestamp) as activity_week
+                FROM events
+                WHERE site_id = $1
+            )
+            SELECT 
+                to_char(f.cohort_week, 'YYYY-MM-DD') as cohort,
+                COUNT(DISTINCT f.visitor_id) as cohort_size,
+                FLOOR(EXTRACT(EPOCH FROM (a.activity_week - f.cohort_week))/604800) as weeks_later,
+                COUNT(DISTINCT a.visitor_id) as retained_users
+            FROM first_seen f
+            JOIN activity a ON f.visitor_id = a.visitor_id
+            WHERE f.cohort_week >= NOW() - INTERVAL '8 weeks'
+            GROUP BY f.cohort_week, weeks_later
+            ORDER BY f.cohort_week DESC, weeks_later ASC
+        `, [siteId]);
+
+        // Format for frontend: { cohort: '2023-10-01', size: 100, weeks: { 0: 100, 1: 50, ... } }
+        const cohorts = {};
+        result.rows.forEach(r => {
+            const date = r.cohort;
+            if (!cohorts[date]) cohorts[date] = { date, size: parseInt(r.cohort_size), retention: {} };
+            cohorts[date].retention[r.weeks_later] = Math.round((parseInt(r.retained_users) / parseInt(r.cohort_size)) * 100);
+        });
+
+        res.json(Object.values(cohorts));
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Error calculating retention' }); }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -61,6 +61,7 @@
         .text-gradient {
             background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -109,6 +110,8 @@
             Zap: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
             Shield: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
             Rocket: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+            Funnel: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>,
+            Users: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
         };
 
         // --- PUBLIC COMPONENTS ---
@@ -387,6 +390,12 @@
             const [campaigns, setCampaigns] = useState([]);
             const [events, setEvents] = useState([]);
 
+            // Advanced Analytics State
+            const [funnelSteps, setFunnelSteps] = useState([{ type: 'pageview', value: '/' }, { type: 'pageview', value: '' }]);
+            const [funnelData, setFunnelData] = useState(null);
+            const [retentionData, setRetentionData] = useState([]);
+            const chartInstance = useRef(null);
+
             const authenticatedFetch = async (url, options = {}) => {
                 const res = await fetch(`${API_BASE}${url}`, {
                     ...options,
@@ -409,10 +418,20 @@
                     locations: () => authenticatedFetch(`/api/sites/${selectedSite}/countries`).then(setCountries),
                     devices: () => authenticatedFetch(`/api/sites/${selectedSite}/devices`).then(setDevices),
                     campaigns: () => authenticatedFetch(`/api/sites/${selectedSite}/campaigns`).then(setCampaigns),
-                    events: () => authenticatedFetch(`/api/sites/${selectedSite}/events`).then(setEvents)
+                    events: () => authenticatedFetch(`/api/sites/${selectedSite}/events`).then(setEvents),
+                    retention: () => authenticatedFetch(`/api/sites/${selectedSite}/retention`).then(setRetentionData),
                 };
                 if (endpoints[activeView]) endpoints[activeView]().catch(console.error);
             }, [selectedSite, activeView]);
+
+            const runFunnelAnalysis = async () => {
+                try {
+                    const data = await authenticatedFetch(`/api/sites/${selectedSite}/funnels/analyze`, {
+                        method: 'POST', body: JSON.stringify({ steps: funnelSteps })
+                    });
+                    setFunnelData(data);
+                } catch (e) { alert('Failed to analyze funnel'); }
+            };
 
             const fetchSites = async () => { try { const data = await authenticatedFetch('/api/sites'); setSites(data); if (data.length > 0 && !selectedSite) setSelectedSite(data[0].id); } catch (e) { } };
             const handleAddSite = async (name, domain) => { try { const newSite = await authenticatedFetch('/api/sites', { method: 'POST', body: JSON.stringify({ name, domain }) }); setSites([newSite, ...sites]); setSelectedSite(newSite.id); } catch (e) { alert('Failed'); } };
@@ -422,6 +441,8 @@
                 { id: 'dashboard', label: 'Dashboard', icon: <Icons.Dashboard /> },
                 { id: 'realtime', label: 'Real-time', icon: <Icons.Live /> },
                 { id: 'revenue', label: 'ROI / Revenue', icon: <Icons.Dollar /> },
+                { id: 'funnels', label: 'Funnels', icon: <Icons.Funnel /> },
+                { id: 'retention', label: 'Retention', icon: <Icons.Users /> },
                 { id: 'pages', label: 'Top Pages', icon: <Icons.Eye /> },
                 { id: 'sources', label: 'Sources', icon: <Icons.Chart /> },
                 { id: 'locations', label: 'Locations', icon: <Icons.Globe /> },
@@ -547,6 +568,107 @@
                                         ))}
                                             {countries.length === 0 && <span className="text-slate-500">No data available</span>}
                                         </div>
+                                    </div>
+                                )}
+
+                                {activeView === 'funnels' && (
+                                    <div className="space-y-6 animate-fade-in">
+                                        <div className="glass-card p-6 rounded-2xl">
+                                            <h3 className="font-bold mb-4">Funnel Configuration</h3>
+                                            <div className="space-y-4 mb-6">
+                                                {funnelSteps.map((step, idx) => (
+                                                    <div key={idx} className="flex gap-4 items-center">
+                                                        <span className="font-mono text-slate-400 w-8">#{idx + 1}</span>
+                                                        <select
+                                                            value={step.type}
+                                                            onChange={e => { const newSteps = [...funnelSteps]; newSteps[idx].type = e.target.value; setFunnelSteps(newSteps); }}
+                                                            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                                        >
+                                                            <option value="pageview">Pageview</option>
+                                                            <option value="event">Custom Event</option>
+                                                        </select>
+                                                        <input
+                                                            type="text"
+                                                            value={step.value}
+                                                            onChange={e => { const newSteps = [...funnelSteps]; newSteps[idx].value = e.target.value; setFunnelSteps(newSteps); }}
+                                                            placeholder={step.type === 'pageview' ? '/pricing' : 'signup_click'}
+                                                            className="flex-1 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                                                        />
+                                                        <button onClick={() => { const newSteps = funnelSteps.filter((_, i) => i !== idx); setFunnelSteps(newSteps); }} className="text-rose-500 hover:text-rose-600">×</button>
+                                                    </div>
+                                                ))}
+                                                <button onClick={() => setFunnelSteps([...funnelSteps, { type: 'pageview', value: '' }])} className="text-sm text-primary-600 font-medium">+ Add Step</button>
+                                            </div>
+                                            <button onClick={runFunnelAnalysis} className="px-6 py-2 bg-primary-600 text-white rounded-lg font-bold hover:bg-primary-700 transition-colors">Analyze Funnel</button>
+                                        </div>
+
+                                        {funnelData && (
+                                            <div className="glass-card p-6 rounded-2xl">
+                                                <h3 className="font-bold mb-6">Conversion Results</h3>
+                                                <div className="space-y-8">
+                                                    {funnelData.map((step, idx) => (
+                                                        <div key={idx} className="relative">
+                                                            <div className="flex justify-between items-end mb-2">
+                                                                <div>
+                                                                    <div className="font-bold text-lg">{step.step}</div>
+                                                                    <div className="text-xs text-slate-500 uppercase tracking-widest">Step {idx + 1}</div>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <div className="text-2xl font-bold">{step.count}</div>
+                                                                    <div className="text-sm text-slate-500">visitors</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-primary-500 rounded-full transition-all duration-1000"
+                                                                    style={{ width: `${(step.count / funnelData[0].count) * 100}%` }}
+                                                                ></div>
+                                                            </div>
+                                                            {idx < funnelData.length - 1 && (
+                                                                <div className="absolute -bottom-6 right-0 text-xs font-mono text-rose-500">
+                                                                    {funnelData[idx + 1].dropoff}% Drop-off
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeView === 'retention' && (
+                                    <div className="glass-card p-6 rounded-2xl animate-fade-in overflow-x-auto">
+                                        <h3 className="font-bold mb-6">User Retention (Weekly Cohorts)</h3>
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th className="text-left py-2 font-medium text-slate-500">Cohort</th>
+                                                    <th className="text-left py-2 font-medium text-slate-500">Users</th>
+                                                    {[...Array(8)].map((_, i) => <th key={i} className="text-center font-medium text-slate-500">Week {i}</th>)}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {retentionData.map((cohort, i) => (
+                                                    <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
+                                                        <td className="py-3 font-mono">{cohort.date}</td>
+                                                        <td className="py-3">{cohort.size}</td>
+                                                        {[...Array(8)].map((_, w) => {
+                                                            const val = cohort.retention[w] || 0;
+                                                            const opacity = val === 0 ? 0.05 : val / 100;
+                                                            return (
+                                                                <td key={w} className="text-center p-1">
+                                                                    <div className="w-full h-8 flex items-center justify-center rounded bg-primary-600 text-white text-xs" style={{ opacity: opacity < 0.1 ? 0.1 : opacity }}>
+                                                                        {val > 0 ? `${val}%` : ''}
+                                                                    </div>
+                                                                </td>
+                                                            );
+                                                        })}
+                                                    </tr>
+                                                ))}
+                                                {retentionData.length === 0 && <tr><td colSpan="10" className="py-8 text-center text-slate-500">No cohort data available yet.</td></tr>}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
 
