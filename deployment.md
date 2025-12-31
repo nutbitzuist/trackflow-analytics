@@ -13,8 +13,9 @@
     ```
 
 ### Frontend (Vercel)
-*   **Project Name**: `frontend`
+*   **Project Name**: `trackflow-frontend`
 *   **Project ID**: `prj_Ihab0Sa4nxmLotd6TXbnwkhKfUNT`
+*   **URL**: https://trackdataflow.vercel.app
 *   **Deployment Command**:
     ```bash
     cd frontend
