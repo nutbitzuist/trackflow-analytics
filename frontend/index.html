@@ -519,17 +519,85 @@
                                 )}
 
                                 {activeView === 'revenue' && (
-                                    <div className="glass-card p-6 rounded-2xl animate-fade-in">
-                                        <h3 className="font-bold mb-4">Revenue Attribution</h3>
-                                        <table className="w-full">
-                                            <thead><tr><th className="text-left py-2">Source</th><th className="text-right">Revenue</th></tr></thead>
-                                            <tbody>{revenueData?.bySource?.map((row, i) => (
-                                                <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-                                                    <td className="py-3">{row.source}</td>
-                                                    <td className="py-3 text-right font-mono text-emerald-500">${row.revenue}</td>
-                                                </tr>
-                                            ))}</tbody>
-                                        </table>
+                                    <div className="space-y-6 animate-fade-in">
+                                        {/* Revenue Stats Cards */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                                                <div className="absolute right-0 top-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                                <span className="text-sm text-slate-500 font-medium">Total Revenue</span>
+                                                <div className="text-3xl font-bold mt-2 text-slate-900 dark:text-white">
+                                                    ${revenueData?.stats?.[0]?.total_revenue?.toLocaleString() || '0.00'}
+                                                </div>
+                                                <div className="text-xs text-emerald-500 font-bold mt-1">+0% vs last month</div>
+                                            </div>
+                                            <div className="glass-card p-6 rounded-2xl">
+                                                <span className="text-sm text-slate-500 font-medium">Avg. Payment</span>
+                                                <div className="text-3xl font-bold mt-2">
+                                                    ${Math.round(revenueData?.stats?.[0]?.avg_payment || 0).toLocaleString()}
+                                                </div>
+                                            </div>
+                                            <div className="glass-card p-6 rounded-2xl">
+                                                <span className="text-sm text-slate-500 font-medium">Transactions</span>
+                                                <div className="text-3xl font-bold mt-2">{revenueData?.stats?.[0]?.total_payments || 0}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Attribution Table / Connect CTA */}
+                                        <div className="glass-card p-6 rounded-2xl">
+                                            <div className="flex justify-between items-center mb-6">
+                                                <h3 className="font-bold flex items-center gap-2"><Icons.Dollar /> Revenue Attribution</h3>
+                                                {(!revenueData?.stats?.[0]?.total_revenue || revenueData.stats[0].total_revenue == 0) && (
+                                                    <button onClick={() => setActiveView('settings')} className="text-xs bg-primary-50 text-primary-600 px-3 py-1 rounded-full hover:bg-primary-100 font-bold">
+                                                        Connect Stripe
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {(!revenueData?.bySource || revenueData.bySource.length === 0) ? (
+                                                <div className="text-center py-12">
+                                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                                                        <Icons.Dollar />
+                                                    </div>
+                                                    <h4 className="font-bold text-lg mb-2">No revenue data yet</h4>
+                                                    <p className="text-slate-500 max-w-sm mx-auto mb-6">Connect your Stripe account to see which traffic sources are driving your sales.</p>
+                                                    <button onClick={() => setActiveView('settings')} className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold hover:scale-105 transition-transform">
+                                                        Connect Payment Processor
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <table className="w-full">
+                                                    <thead>
+                                                        <tr className="border-b border-slate-100 dark:border-slate-800 text-xs uppercase tracking-wider text-slate-500">
+                                                            <th className="text-left py-3 font-medium">Source</th>
+                                                            <th className="text-right py-3 font-medium">Transactions</th>
+                                                            <th className="text-right py-3 font-medium">Revenue</th>
+                                                            <th className="text-right py-3 font-medium">% of Total</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {revenueData.bySource.map((row, i) => {
+                                                            const total = revenueData.stats[0].total_revenue || 1;
+                                                            const pct = ((row.revenue / total) * 100).toFixed(1);
+                                                            return (
+                                                                <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                                    <td className="py-4 font-medium">{row.source || 'Direct / Unknown'}</td>
+                                                                    <td className="py-4 text-right text-slate-500">{row.payments}</td>
+                                                                    <td className="py-4 text-right font-mono font-bold text-slate-900 dark:text-white">${row.revenue.toLocaleString()}</td>
+                                                                    <td className="py-4 text-right">
+                                                                        <div className="flex items-center justify-end gap-2">
+                                                                            <span className="text-xs text-slate-500">{pct}%</span>
+                                                                            <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }}></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
