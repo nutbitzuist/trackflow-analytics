@@ -184,90 +184,8 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // Mock data generator
-        const generateMockData = (days = 30) => {
-            const data = [];
-            const now = new Date();
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-                data.push({
-                    date: date.toISOString().split('T')[0],
-                    visitors: Math.floor(Math.random() * 2000) + 500,
-                    pageviews: Math.floor(Math.random() * 5000) + 1000,
-                    sessions: Math.floor(Math.random() * 3000) + 700,
-                    bounceRate: Math.floor(Math.random() * 30) + 25,
-                    avgDuration: Math.floor(Math.random() * 180) + 60,
-                });
-            }
-            return data;
-        };
-
-        const websites = [
-            { id: 1, name: 'mystore.com', domain: 'mystore.com', visitors: 45230, revenue: 12450, color: '#6366f1' },
-            { id: 2, name: 'blog.mycompany.io', domain: 'blog.mycompany.io', visitors: 23100, revenue: 3200, color: '#8b5cf6' },
-            { id: 3, name: 'saas-app.co', domain: 'saas-app.co', visitors: 67800, revenue: 28900, color: '#a855f7' },
-            { id: 4, name: 'portfolio.dev', domain: 'portfolio.dev', visitors: 12400, revenue: 0, color: '#d946ef' },
-            { id: 5, name: 'newsletter.io', domain: 'newsletter.io', visitors: 34500, revenue: 5600, color: '#ec4899' },
-            { id: 6, name: 'ecommerce-shop.com', domain: 'ecommerce-shop.com', visitors: 89200, revenue: 45300, color: '#f43f5e' },
-            { id: 7, name: 'landing-page.co', domain: 'landing-page.co', visitors: 15600, revenue: 2100, color: '#f97316' },
-            { id: 8, name: 'docs.myproduct.com', domain: 'docs.myproduct.com', visitors: 28900, revenue: 0, color: '#eab308' },
-            { id: 9, name: 'community.app', domain: 'community.app', visitors: 41200, revenue: 8700, color: '#22c55e' },
-            { id: 10, name: 'api-service.io', domain: 'api-service.io', visitors: 19800, revenue: 15200, color: '#14b8a6' },
-        ];
-
-        const topPages = [
-            { path: '/', views: 12450, percentage: 28 },
-            { path: '/pricing', views: 8900, percentage: 20 },
-            { path: '/features', views: 6700, percentage: 15 },
-            { path: '/blog/top-10-tips', views: 4500, percentage: 10 },
-            { path: '/about', views: 3200, percentage: 7 },
-            { path: '/contact', views: 2800, percentage: 6 },
-            { path: '/docs/getting-started', views: 2100, percentage: 5 },
-            { path: '/signup', views: 1900, percentage: 4 },
-        ];
-
-        const trafficSources = [
-            { source: 'Google', visitors: 18500, percentage: 42, icon: '🔍', color: '#4285f4' },
-            { source: 'Direct', visitors: 12300, percentage: 28, icon: '🔗', color: '#6366f1' },
-            { source: 'Twitter/X', visitors: 5600, percentage: 13, icon: '𝕏', color: '#000' },
-            { source: 'Product Hunt', visitors: 3400, percentage: 8, icon: '🚀', color: '#da552f' },
-            { source: 'LinkedIn', visitors: 2100, percentage: 5, icon: '💼', color: '#0077b5' },
-            { source: 'Reddit', visitors: 1800, percentage: 4, icon: '🤖', color: '#ff4500' },
-        ];
-
-        const countries = [
-            { name: 'United States', code: 'US', visitors: 18500, flag: '🇺🇸' },
-            { name: 'United Kingdom', code: 'GB', visitors: 8200, flag: '🇬🇧' },
-            { name: 'Germany', code: 'DE', visitors: 5400, flag: '🇩🇪' },
-            { name: 'Canada', code: 'CA', visitors: 4100, flag: '🇨🇦' },
-            { name: 'France', code: 'FR', visitors: 3200, flag: '🇫🇷' },
-            { name: 'Australia', code: 'AU', visitors: 2800, flag: '🇦🇺' },
-            { name: 'Japan', code: 'JP', visitors: 2100, flag: '🇯🇵' },
-            { name: 'India', code: 'IN', visitors: 1900, flag: '🇮🇳' },
-        ];
-
-        const devices = [
-            { type: 'Desktop', percentage: 58, icon: '💻' },
-            { type: 'Mobile', percentage: 35, icon: '📱' },
-            { type: 'Tablet', percentage: 7, icon: '📟' },
-        ];
-
-        const browsers = [
-            { name: 'Chrome', percentage: 62, color: '#4285f4' },
-            { name: 'Safari', percentage: 24, color: '#000' },
-            { name: 'Firefox', percentage: 8, color: '#ff7139' },
-            { name: 'Edge', percentage: 4, color: '#0078d7' },
-            { name: 'Other', percentage: 2, color: '#6b7280' },
-        ];
-
-        const liveVisitors = [
-            { id: 1, page: '/pricing', country: '🇺🇸', device: 'Desktop', duration: '2:34', source: 'Google' },
-            { id: 2, page: '/features', country: '🇬🇧', device: 'Mobile', duration: '1:12', source: 'Direct' },
-            { id: 3, page: '/blog/seo-guide', country: '🇩🇪', device: 'Desktop', duration: '4:56', source: 'Twitter' },
-            { id: 4, page: '/', country: '🇨🇦', device: 'Desktop', duration: '0:45', source: 'Product Hunt' },
-            { id: 5, page: '/signup', country: '🇫🇷', device: 'Mobile', duration: '1:23', source: 'Google' },
-        ];
+        // Configuration
+        const API_BASE = 'https://trackflow-backend-production.up.railway.app';
 
         // Icons
         const Icons = {
@@ -381,6 +299,8 @@
             const chartRef = useRef(null);
 
             useEffect(() => {
+                if (!data || data.length === 0) return;
+
                 if (chartRef.current) {
                     chartRef.current.destroy();
                 }
@@ -544,8 +464,8 @@
                             <Icons.Globe />
                         </div>
                         <div className="flex-1 text-left">
-                            <div className="font-semibold text-slate-900 dark:text-white text-sm">{selected?.domain}</div>
-                            <div className="text-xs text-slate-500">{selected?.visitors.toLocaleString()} visitors</div>
+                            <div className="font-semibold text-slate-900 dark:text-white text-sm">{selected?.name || 'Create Website'}</div>
+                            {selected && <div className="text-xs text-slate-500">{selected.domain}</div>}
                         </div>
                         <Icons.ChevronDown />
                     </button>
@@ -567,11 +487,7 @@
                                     </div>
                                     <div className="flex-1 text-left">
                                         <div className="font-medium text-slate-900 dark:text-white text-sm">{site.domain}</div>
-                                        <div className="text-xs text-slate-500">{site.visitors.toLocaleString()} visitors</div>
                                     </div>
-                                    {site.revenue > 0 && (
-                                        <span className="text-xs font-medium text-emerald-600">${site.revenue.toLocaleString()}</span>
-                                    )}
                                 </button>
                             ))}
                         </div>
@@ -591,7 +507,7 @@
     var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s);
     j.async=true;
-    j.src='https://track.yoursite.com/t.js';
+    j.src='https://trackflow-backend-production.up.railway.app/t.js';
     j.setAttribute('data-site','${siteId}');
     f.parentNode.insertBefore(j,f);
   })(window,document,'script','tf','TF-${siteId}');
@@ -620,8 +536,8 @@
                             <button
                                 onClick={handleCopy}
                                 className={`absolute top-4 right-4 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${copied
-                                        ? 'bg-emerald-500 text-white'
-                                        : 'bg-white/10 text-white hover:bg-white/20'
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
                                     }`}
                             >
                                 {copied ? <Icons.Check /> : <Icons.Copy />}
@@ -651,6 +567,8 @@
         // Add Website Modal
         const AddWebsiteModal = ({ isOpen, onClose, onAdd }) => {
             const [domain, setDomain] = useState('');
+            const [name, setName] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
 
             if (!isOpen) return null;
 
@@ -662,13 +580,28 @@
                             Enter your website domain to start tracking analytics.
                         </p>
 
-                        <input
-                            type="text"
-                            value={domain}
-                            onChange={(e) => setDomain(e.target.value)}
-                            placeholder="example.com"
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                        />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Site Name</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="My Cool Store"
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Domain</label>
+                                <input
+                                    type="text"
+                                    value={domain}
+                                    onChange={(e) => setDomain(e.target.value)}
+                                    placeholder="example.com"
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                        </div>
 
                         <div className="flex gap-3 mt-6">
                             <button
@@ -678,14 +611,18 @@
                                 Cancel
                             </button>
                             <button
-                                onClick={() => {
-                                    onAdd(domain);
+                                onClick={async () => {
+                                    setIsLoading(true);
+                                    await onAdd(name, domain);
+                                    setIsLoading(false);
                                     setDomain('');
+                                    setName('');
                                     onClose();
                                 }}
-                                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors"
+                                disabled={isLoading}
+                                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
                             >
-                                Add Website
+                                {isLoading ? 'Adding...' : 'Add Website'}
                             </button>
                         </div>
                     </div>
@@ -696,53 +633,65 @@
         // Live Visitors Component
         const LiveVisitors = ({ visitors }) => (
             <div className="space-y-3">
-                {visitors.map((visitor, i) => (
-                    <div
-                        key={visitor.id}
-                        className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl animate-slide-up"
-                        style={{ animationDelay: `${i * 50}ms` }}
-                    >
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold">
-                                {visitor.country}
+                {visitors.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500">No visitors right now.</div>
+                ) : (
+                    visitors.map((visitor, i) => (
+                        <div
+                            key={i}
+                            className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl animate-slide-up"
+                            style={{ animationDelay: `${i * 50}ms` }}
+                        >
+                            <div className="relative">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold">
+                                    {visitor.country || '🌍'}
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 live-dot" />
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 live-dot" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="font-medium text-slate-900 dark:text-white truncate">{visitor.page}</div>
-                            <div className="text-sm text-slate-500 flex items-center gap-2">
-                                <span>{visitor.device}</span>
-                                <span>•</span>
-                                <span>{visitor.source}</span>
+                            <div className="flex-1 min-w-0">
+                                <div className="font-medium text-slate-900 dark:text-white truncate">{visitor.title || visitor.path}</div>
+                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                    <span>{visitor.device_type}</span>
+                                    <span>•</span>
+                                    <span>{visitor.source}</span>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="font-mono text-sm text-slate-600 dark:text-slate-400">Active</div>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <div className="font-mono text-sm text-slate-600 dark:text-slate-400">{visitor.duration}</div>
-                            <div className="text-xs text-slate-400">on page</div>
-                        </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         );
 
         // Main App Component
         const App = () => {
             const [darkMode, setDarkMode] = useState(false);
-            const [selectedSite, setSelectedSite] = useState(1);
+            const [selectedSite, setSelectedSite] = useState(null);
             const [activeView, setActiveView] = useState('dashboard');
             const [selectedMetric, setSelectedMetric] = useState('visitors');
             const [dateRange, setDateRange] = useState('30d');
             const [showScriptModal, setShowScriptModal] = useState(false);
             const [showAddModal, setShowAddModal] = useState(false);
-            const [siteList, setSiteList] = useState(websites);
 
-            const chartData = useMemo(() => generateMockData(dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90), [dateRange]);
+            // Real Data State
+            const [siteList, setSiteList] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [stats, setStats] = useState(null);
+            const [timeSeries, setTimeSeries] = useState([]);
+            const [topPages, setTopPages] = useState([]);
+            const [sources, setSources] = useState([]);
+            const [deviceStats, setDeviceStats] = useState({ devices: [], browsers: [] });
+            const [liveData, setLiveData] = useState({ count: 0, visitors: [] });
+            const [revenueData, setRevenueData] = useState({ stats: [], bySource: [] });
 
-            const totalVisitors = chartData.reduce((sum, d) => sum + d.visitors, 0);
-            const totalPageviews = chartData.reduce((sum, d) => sum + d.pageviews, 0);
-            const avgBounceRate = Math.round(chartData.reduce((sum, d) => sum + d.bounceRate, 0) / chartData.length);
-            const avgDuration = Math.round(chartData.reduce((sum, d) => sum + d.avgDuration, 0) / chartData.length);
+            // Initial Fetch
+            useEffect(() => {
+                fetchSites();
+            }, []);
 
+            // Handle dark mode
             useEffect(() => {
                 if (darkMode) {
                     document.documentElement.classList.add('dark');
@@ -751,32 +700,114 @@
                 }
             }, [darkMode]);
 
-            const handleAddWebsite = (domain) => {
-                const colors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6'];
-                const newSite = {
-                    id: siteList.length + 1,
-                    name: domain,
-                    domain: domain,
-                    visitors: 0,
-                    revenue: 0,
-                    color: colors[siteList.length % colors.length],
+            // Fetch Data when site changes or filtering changes
+            useEffect(() => {
+                if (!selectedSite) return;
+
+                const fetchData = async () => {
+                    setIsLoading(true);
+                    try {
+                        // Parallel fetching for dashboard
+                        const [statsRes, seriesRes] = await Promise.all([
+                            fetch(`${API_BASE}/api/sites/${selectedSite}/stats?period=${dateRange}`),
+                            fetch(`${API_BASE}/api/sites/${selectedSite}/timeseries?period=${dateRange}`)
+                        ]);
+
+                        const statsData = await statsRes.json();
+                        const seriesData = await seriesRes.json();
+
+                        setStats(statsData);
+                        setTimeSeries(seriesData);
+                    } catch (error) {
+                        console.error('Failed to fetch data', error);
+                    } finally {
+                        setIsLoading(false);
+                    }
                 };
-                setSiteList([...siteList, newSite]);
-                setSelectedSite(newSite.id);
-                setShowScriptModal(true);
+
+                fetchData();
+            }, [selectedSite, dateRange]);
+
+            // Fetch view-specific data
+            useEffect(() => {
+                if (!selectedSite) return;
+
+                const fetchViewData = async () => {
+                    if (activeView === 'pages') {
+                        const res = await fetch(`${API_BASE}/api/sites/${selectedSite}/pages?period=${dateRange}`);
+                        setTopPages(await res.json());
+                    } else if (activeView === 'sources') {
+                        const res = await fetch(`${API_BASE}/api/sites/${selectedSite}/sources?period=${dateRange}`);
+                        setSources(await res.json());
+                    } else if (activeView === 'realtime') {
+                        const res = await fetch(`${API_BASE}/api/sites/${selectedSite}/realtime`);
+                        setLiveData(await res.json());
+                    } else if (activeView === 'revenue') {
+                        const res = await fetch(`${API_BASE}/api/sites/${selectedSite}/revenue?period=${dateRange}`);
+                        setRevenueData(await res.json());
+                    }
+                };
+
+                fetchViewData();
+            }, [activeView, selectedSite, dateRange]);
+
+            const fetchSites = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/sites`);
+                    const sites = await res.json();
+                    setSiteList(sites);
+                    if (sites.length > 0 && !selectedSite) {
+                        setSelectedSite(sites[0].id);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch sites', error);
+                }
+            };
+
+            const handleAddWebsite = async (name, domain) => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/sites`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, domain })
+                    });
+                    const newSite = await res.json();
+
+                    // Add color for UI (frontend only)
+                    const colors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#14b8a6'];
+                    newSite.color = colors[siteList.length % colors.length];
+
+                    setSiteList([newSite, ...siteList]);
+                    setSelectedSite(newSite.id);
+                    setShowScriptModal(true);
+                } catch (error) {
+                    alert('Failed to add website');
+                }
             };
 
             const menuItems = [
                 { id: 'dashboard', label: 'Dashboard', icon: <Icons.Dashboard /> },
                 { id: 'realtime', label: 'Real-time', icon: <Icons.Live /> },
+                { id: 'revenue', label: 'ROI / Revenue', icon: <Icons.Dollar /> },
                 { id: 'pages', label: 'Pages', icon: <Icons.Eye /> },
                 { id: 'sources', label: 'Sources', icon: <Icons.Chart /> },
-                { id: 'funnels', label: 'Funnels', icon: <Icons.Funnel /> },
                 { id: 'script', label: 'Get Script', icon: <Icons.Code /> },
                 { id: 'settings', label: 'Settings', icon: <Icons.Settings /> },
             ];
 
             const renderContent = () => {
+                if (!selectedSite && !isLoading) {
+                    return (
+                        <div className="flex flex-col items-center justify-center h-96">
+                            <h2 className="text-2xl font-bold mb-4">Welcome to TrackFlow</h2>
+                            <p className="mb-6 text-slate-500">Create your first website to get started.</p>
+                            <button onClick={() => setShowAddModal(true)} className="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium">
+                                Add Website
+                            </button>
+                        </div>
+                    );
+                }
+
                 switch (activeView) {
                     case 'realtime':
                         return (
@@ -786,13 +817,70 @@
                                         <div className="w-4 h-4 bg-emerald-500 rounded-full animate-ping absolute" />
                                         <div className="w-4 h-4 bg-emerald-500 rounded-full relative" />
                                     </div>
-                                    <span className="text-4xl font-bold text-slate-900 dark:text-white">{liveVisitors.length}</span>
+                                    <span className="text-4xl font-bold text-slate-900 dark:text-white">{liveData.count}</span>
                                     <span className="text-slate-500">visitors online right now</span>
+                                    <button onClick={() => setLiveData({ ...liveData })} className="text-sm text-primary-600">Refresh</button>
                                 </div>
 
                                 <div className="glass-card rounded-2xl p-6">
                                     <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Active Visitors</h3>
-                                    <LiveVisitors visitors={liveVisitors} />
+                                    <LiveVisitors visitors={liveData.visitors} />
+                                </div>
+                            </div>
+                        );
+
+                    case 'revenue':
+                        return (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <StatCard
+                                        title="Total Revenue"
+                                        value={`$${(revenueData.stats[0]?.total_revenue || 0).toLocaleString()}`}
+                                        change={0}
+                                        icon={<Icons.Dollar />}
+                                    />
+                                    <StatCard
+                                        title="Avg Payment"
+                                        value={`$${Math.round(revenueData.stats[0]?.avg_payment || 0)}`}
+                                        change={0}
+                                        icon={<Icons.TrendUp />}
+                                    />
+                                    <StatCard
+                                        title="Total Sales"
+                                        value={(revenueData.stats[0]?.total_payments || 0).toLocaleString()}
+                                        change={0}
+                                        icon={<Icons.Check />}
+                                    />
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-6">
+                                    <h3 className="font-semibold text-slate-900 dark:text-white mb-6">Revenue by Source (ROI)</h3>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-200 dark:border-slate-700">
+                                                    <th className="pb-4 font-medium text-slate-500">Source</th>
+                                                    <th className="pb-4 font-medium text-slate-500 text-right">Sales</th>
+                                                    <th className="pb-4 font-medium text-slate-500 text-right">Revenue</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                {revenueData.bySource && revenueData.bySource.length > 0 ? (
+                                                    revenueData.bySource.map((row, i) => (
+                                                        <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                            <td className="py-4 font-medium text-slate-900 dark:text-white pl-4 rounded-l-xl">{row.source}</td>
+                                                            <td className="py-4 text-right text-slate-600 dark:text-slate-400">{row.payments}</td>
+                                                            <td className="py-4 text-right font-bold text-emerald-600 rounded-r-xl">${row.revenue.toLocaleString()}</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="3" className="py-8 text-center text-slate-500">No revenue attributed yet.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -805,95 +893,34 @@
                                     {topPages.map((page, i) => (
                                         <div key={page.path} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="font-mono text-sm text-slate-700 dark:text-slate-300">{page.path}</span>
+                                                <span className="font-mono text-sm text-slate-700 dark:text-slate-300">{page.path} <span className="text-xs text-slate-400">({page.title})</span></span>
                                                 <span className="text-sm font-medium text-slate-900 dark:text-white">{page.views.toLocaleString()} views</span>
                                             </div>
-                                            <ProgressBar percentage={page.percentage * 3} delay={i * 100} />
+                                            <ProgressBar percentage={(page.views / (topPages[0]?.views || 1)) * 100} delay={i * 100} />
                                         </div>
                                     ))}
+                                    {topPages.length === 0 && <div className="text-center text-slate-500 py-4">No page views yet.</div>}
                                 </div>
                             </div>
                         );
 
                     case 'sources':
                         return (
-                            <div className="grid gap-6 lg:grid-cols-2">
-                                <div className="glass-card rounded-2xl p-6">
-                                    <h3 className="font-semibold text-slate-900 dark:text-white mb-6">Traffic Sources</h3>
-                                    <div className="space-y-4">
-                                        {trafficSources.map((source, i) => (
-                                            <div key={source.source} className="flex items-center gap-4 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: source.color + '20' }}>
-                                                    {source.icon}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between mb-1">
-                                                        <span className="font-medium text-slate-900 dark:text-white">{source.source}</span>
-                                                        <span className="text-sm text-slate-500">{source.visitors.toLocaleString()}</span>
-                                                    </div>
-                                                    <ProgressBar percentage={source.percentage * 2} color={source.color} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="glass-card rounded-2xl p-6">
-                                    <h3 className="font-semibold text-slate-900 dark:text-white mb-6">Top Countries</h3>
-                                    <div className="space-y-4">
-                                        {countries.map((country, i) => (
-                                            <div key={country.code} className="flex items-center gap-4 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                                                <span className="text-2xl">{country.flag}</span>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between mb-1">
-                                                        <span className="font-medium text-slate-900 dark:text-white">{country.name}</span>
-                                                        <span className="text-sm text-slate-500">{country.visitors.toLocaleString()}</span>
-                                                    </div>
-                                                    <ProgressBar percentage={(country.visitors / 18500) * 100} />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-
-                    case 'funnels':
-                        return (
                             <div className="glass-card rounded-2xl p-6">
-                                <h3 className="font-semibold text-slate-900 dark:text-white mb-6">Conversion Funnel</h3>
+                                <h3 className="font-semibold text-slate-900 dark:text-white mb-6">Traffic Sources</h3>
                                 <div className="space-y-4">
-                                    {[
-                                        { step: 'Homepage Visit', count: 45230, percentage: 100 },
-                                        { step: 'Pricing Page', count: 18500, percentage: 41 },
-                                        { step: 'Sign Up Started', count: 8200, percentage: 18 },
-                                        { step: 'Email Verified', count: 5400, percentage: 12 },
-                                        { step: 'Subscription', count: 1200, percentage: 2.7 },
-                                    ].map((step, i) => (
-                                        <div key={step.step} className="animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
-                                                        {i + 1}
-                                                    </span>
-                                                    <span className="font-medium text-slate-900 dark:text-white">{step.step}</span>
+                                    {sources.map((source, i) => (
+                                        <div key={source.source} className="flex items-center gap-4 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="font-medium text-slate-900 dark:text-white">{source.source} <span className="text-xs text-slate-400">({source.medium})</span></span>
+                                                    <span className="text-sm text-slate-500">{source.visitors.toLocaleString()} visitors</span>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="font-bold text-slate-900 dark:text-white">{step.count.toLocaleString()}</span>
-                                                    <span className="text-slate-500 text-sm ml-2">({step.percentage}%)</span>
-                                                </div>
+                                                <ProgressBar percentage={(source.visitors / (sources[0]?.visitors || 1)) * 100} color="#6366f1" />
                                             </div>
-                                            <div className="h-12 bg-gradient-to-r from-primary-500 to-primary-400 rounded-xl flex items-center justify-center transition-all duration-500"
-                                                style={{ width: `${step.percentage}%`, minWidth: '80px' }}>
-                                                <span className="text-white font-medium text-sm">{step.percentage}%</span>
-                                            </div>
-                                            {i < 4 && (
-                                                <div className="flex justify-center my-2">
-                                                    <Icons.ArrowRight />
-                                                </div>
-                                            )}
                                         </div>
                                     ))}
+                                    {sources.length === 0 && <div className="text-center text-slate-500 py-4">No traffic sources yet.</div>}
                                 </div>
                             </div>
                         );
@@ -920,7 +947,7 @@
     var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s);
     j.async=true;
-    j.src='https://track.yoursite.com/t.js';
+    j.src='https://trackflow-backend-production.up.railway.app/t.js';
     j.setAttribute('data-site','${selectedSite}');
     f.parentNode.insertBefore(j,f);
   })(window,document,'script','tf','TF-${selectedSite}');
@@ -944,34 +971,19 @@
                             <div className="max-w-2xl space-y-6">
                                 <div className="glass-card rounded-2xl p-6">
                                     <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Website Settings</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Website Domain
-                                            </label>
-                                            <input
-                                                type="text"
-                                                defaultValue={siteList.find(s => s.id === selectedSite)?.domain}
-                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                                Timezone
-                                            </label>
-                                            <select className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-                                                <option>UTC</option>
-                                                <option>America/New_York</option>
-                                                <option>Europe/London</option>
-                                                <option>Asia/Tokyo</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                    <p className="text-slate-500">Site ID: <span className="font-mono">{selectedSite}</span></p>
                                 </div>
-
                                 <div className="glass-card rounded-2xl p-6">
                                     <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Danger Zone</h3>
-                                    <button className="px-4 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors">
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm('Are you sure? This cannot be undone.')) {
+                                                await fetch(`${API_BASE}/api/sites/${selectedSite}`, { method: 'DELETE' });
+                                                window.location.reload();
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 rounded-xl font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition-colors"
+                                    >
                                         Delete Website
                                     </button>
                                 </div>
@@ -979,35 +991,36 @@
                         );
 
                     default:
+                        // Dashboard View
                         return (
                             <>
                                 {/* Stats Grid */}
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                                     <StatCard
                                         title="Unique Visitors"
-                                        value={totalVisitors.toLocaleString()}
-                                        change={12.5}
+                                        value={stats?.unique_visitors?.toLocaleString() || '0'}
+                                        change={stats?.changes?.visitors || 0}
                                         icon={<Icons.Users />}
                                         delay={0}
                                     />
                                     <StatCard
                                         title="Page Views"
-                                        value={totalPageviews.toLocaleString()}
-                                        change={8.2}
+                                        value={stats?.total_pageviews?.toLocaleString() || '0'}
+                                        change={stats?.changes?.pageviews || 0}
                                         icon={<Icons.Eye />}
                                         delay={100}
                                     />
                                     <StatCard
                                         title="Bounce Rate"
-                                        value={`${avgBounceRate}%`}
-                                        change={-3.1}
-                                        icon={<Icons.Chart />}
+                                        value="-%" // Need endpoint for this
+                                        change={0}
+                                        icon={<Icons.TrendUp />}
                                         delay={200}
                                     />
                                     <StatCard
-                                        title="Avg. Duration"
-                                        value={`${Math.floor(avgDuration / 60)}m ${avgDuration % 60}s`}
-                                        change={5.7}
+                                        title="Active Now"
+                                        value={liveData.count}
+                                        change={0}
                                         icon={<Icons.Clock />}
                                         delay={300}
                                     />
@@ -1015,90 +1028,25 @@
 
                                 {/* Main Chart */}
                                 <div className="glass-card rounded-2xl p-6 mb-8 animate-slide-up" style={{ animationDelay: '400ms' }}>
-                                    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                                        <div className="flex gap-2">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">Overview</h3>
+                                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                                             {['visitors', 'pageviews', 'sessions'].map((metric) => (
                                                 <button
                                                     key={metric}
                                                     onClick={() => setSelectedMetric(metric)}
-                                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedMetric === metric
-                                                            ? 'bg-primary-600 text-white'
-                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedMetric === metric
+                                                        ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
+                                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                                         }`}
                                                 >
                                                     {metric.charAt(0).toUpperCase() + metric.slice(1)}
                                                 </button>
                                             ))}
                                         </div>
-                                        <div className="flex gap-2">
-                                            {['7d', '30d', '90d'].map((range) => (
-                                                <button
-                                                    key={range}
-                                                    onClick={() => setDateRange(range)}
-                                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${dateRange === range
-                                                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                                        }`}
-                                                >
-                                                    {range}
-                                                </button>
-                                            ))}
-                                        </div>
                                     </div>
                                     <div className="h-80">
-                                        <AnalyticsChart data={chartData} selectedMetric={selectedMetric} />
-                                    </div>
-                                </div>
-
-                                {/* Bottom Grid */}
-                                <div className="grid gap-6 lg:grid-cols-3">
-                                    {/* Top Pages */}
-                                    <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '500ms' }}>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Top Pages</h3>
-                                        <div className="space-y-3">
-                                            {topPages.slice(0, 5).map((page, i) => (
-                                                <div key={page.path} className="flex items-center justify-between">
-                                                    <span className="font-mono text-sm text-slate-600 dark:text-slate-400 truncate flex-1 mr-4">
-                                                        {page.path}
-                                                    </span>
-                                                    <span className="text-sm font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                                                        {page.views.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Traffic Sources */}
-                                    <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '600ms' }}>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Traffic Sources</h3>
-                                        <div className="space-y-3">
-                                            {trafficSources.slice(0, 5).map((source) => (
-                                                <div key={source.source} className="flex items-center gap-3">
-                                                    <span className="text-lg">{source.icon}</span>
-                                                    <span className="flex-1 text-slate-600 dark:text-slate-400">{source.source}</span>
-                                                    <span className="font-medium text-slate-900 dark:text-white">{source.percentage}%</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Devices & Browsers */}
-                                    <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: '700ms' }}>
-                                        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Devices</h3>
-                                        <div className="space-y-3">
-                                            {devices.map((device) => (
-                                                <div key={device.type}>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                                            {device.icon} {device.type}
-                                                        </span>
-                                                        <span className="font-medium text-slate-900 dark:text-white">{device.percentage}%</span>
-                                                    </div>
-                                                    <ProgressBar percentage={device.percentage} />
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <AnalyticsChart data={timeSeries} selectedMetric={selectedMetric} />
                                     </div>
                                 </div>
                             </>
@@ -1107,97 +1055,70 @@
             };
 
             return (
-                <div className="flex min-h-screen">
+                <div className="flex h-screen overflow-hidden text-slate-600 dark:text-slate-400">
                     {/* Sidebar */}
-                    <aside className="w-72 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col glass-card">
-                        {/* Logo */}
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 gradient-animated rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
+                    <aside className="w-64 glass-card border-r border-slate-200 dark:border-slate-800 flex flex-col z-20">
+                        <div className="p-6">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="w-8 h-8 bg-gradient-to-tr from-primary-500 to-primary-300 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                                    T
+                                </div>
+                                <span className="font-bold text-xl text-slate-900 dark:text-white">TrackFlow</span>
                             </div>
-                            <span className="text-xl font-bold text-slate-900 dark:text-white">TrackFlow</span>
-                        </div>
 
-                        {/* Website Selector */}
-                        <div className="mb-6">
-                            <WebsiteSelector
-                                websites={siteList}
-                                selectedSite={selectedSite}
-                                onSelect={setSelectedSite}
-                            />
-                        </div>
+                            <div className="mb-8">
+                                <WebsiteSelector
+                                    websites={siteList}
+                                    selectedSite={selectedSite}
+                                    onSelect={setSelectedSite}
+                                />
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="mt-2 w-full py-2 text-sm text-primary-600 font-medium hover:text-primary-700 flex items-center justify-center gap-2"
+                                >
+                                    <Icons.Plus />
+                                    Add Website
+                                </button>
+                            </div>
 
-                        {/* Add Website Button */}
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-3 px-4 py-3 mb-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:border-primary-500 hover:text-primary-600 transition-colors"
-                        >
-                            <Icons.Plus />
-                            <span className="font-medium">Add Website</span>
-                        </button>
-
-                        {/* Navigation */}
-                        <nav className="flex-1">
-                            <ul className="space-y-1">
+                            <nav className="space-y-1">
                                 {menuItems.map((item) => (
-                                    <li key={item.id}>
-                                        <button
-                                            onClick={() => {
-                                                if (item.id === 'script') {
-                                                    setShowScriptModal(true);
-                                                } else {
-                                                    setActiveView(item.id);
-                                                }
-                                            }}
-                                            className={`sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl w-full transition-all ${activeView === item.id
-                                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                }`}
-                                        >
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setActiveView(item.id)}
+                                        className={`sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeView === item.id
+                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                                            }`}
+                                    >
+                                        <div className={activeView === item.id ? 'text-primary-600' : 'text-slate-400'}>
                                             {item.icon}
-                                            <span>{item.label}</span>
-                                            {item.id === 'realtime' && (
-                                                <span className="ml-auto flex items-center gap-1.5">
-                                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                                    <span className="text-xs font-medium">{liveVisitors.length}</span>
-                                                </span>
-                                            )}
-                                        </button>
-                                    </li>
+                                        </div>
+                                        {item.label}
+                                    </button>
                                 ))}
-                            </ul>
-                        </nav>
+                            </nav>
+                        </div>
 
-                        {/* Theme Toggle */}
-                        <button
-                            onClick={() => setDarkMode(!darkMode)}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mt-auto"
-                        >
-                            {darkMode ? <Icons.Sun /> : <Icons.Moon />}
-                            <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-                        </button>
+                        <div className="mt-auto p-6 border-t border-slate-200 dark:border-slate-800">
+                            <button
+                                onClick={() => setDarkMode(!darkMode)}
+                                className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+                            >
+                                <span className="font-medium">Dark Mode</span>
+                                <div className={`w-12 h-6 rounded-full p-1 transition-colors ${darkMode ? 'bg-primary-600' : 'bg-slate-300'}`}>
+                                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                                </div>
+                            </button>
+                        </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="flex-1 p-8 overflow-auto">
-                        <div className="max-w-7xl mx-auto">
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white capitalize">
-                                        {activeView === 'dashboard' ? siteList.find(s => s.id === selectedSite)?.domain : activeView}
-                                    </h1>
-                                    <p className="text-slate-500 mt-1">
-                                        {activeView === 'dashboard'
-                                            ? `Last ${dateRange === '7d' ? '7 days' : dateRange === '30d' ? '30 days' : '90 days'}`
-                                            : `View ${activeView} analytics`
-                                        }
-                                    </p>
-                                </div>
-
-                                {activeView === 'dashboard' && (
+                    <main className="flex-1 overflow-auto relative">
+                        {/* Header */}
+                        <header className="sticky top-0 z-10 p-6 flex justify-end">
+                            <div className="flex gap-4">
+                                {selectedSite && (activeView === 'dashboard' || activeView === 'script') && (
                                     <button
                                         onClick={() => setShowScriptModal(true)}
                                         className="px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors flex items-center gap-2 animate-pulse-glow"
@@ -1205,6 +1126,36 @@
                                         <Icons.Code />
                                         Get Script
                                     </button>
+                                )}
+                            </div>
+                        </header>
+
+                        <div className="p-6 pt-0 max-w-7xl mx-auto">
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white capitalize">
+                                    {menuItems.find(i => i.id === activeView)?.label}
+                                </h2>
+                                <p className="text-slate-500">
+                                    {activeView === 'revenue'
+                                        ? 'Track the ROI of your marketing efforts.'
+                                        : `Overview of your ${activeView === 'sources' ? 'traffic sources' : activeView}`}
+                                </p>
+
+                                {activeView !== 'realtime' && activeView !== 'settings' && activeView !== 'script' && (
+                                    <div className="flex items-center gap-2 mt-4 bg-white dark:bg-slate-800 rounded-lg p-1 w-fit border border-slate-200 dark:border-slate-700">
+                                        {['7d', '30d', '90d'].map((range) => (
+                                            <button
+                                                key={range}
+                                                onClick={() => setDateRange(range)}
+                                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${dateRange === range
+                                                        ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white'
+                                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                                    }`}
+                                            >
+                                                Last {range}
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
 
