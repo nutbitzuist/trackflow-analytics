@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono&display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,14 +20,22 @@
                 extend: {
                     colors: {
                         primary: {
-                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
-                            400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
-                            800: '#3730a3', 900: '#312e81',
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        },
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
                         }
                     },
                     fontFamily: {
-                        sans: ['DM Sans', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
                         mono: ['Space Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(249, 115, 22, 0.5)',
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                     }
                 }
             }
@@ -34,46 +43,47 @@
     </script>
     <style>
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
         .dark .glass-card {
-            background: rgba(30, 30, 40, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        @keyframes fadeIn {
+        .text-gradient {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes fadeUp {
             from {
                 opacity: 0;
+                transform: translateY(20px);
             }
 
             to {
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        /* Hero gradient */
-        .hero-gradient {
-            background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
-        }
-
-        .dark .hero-gradient {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        .animate-fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
         }
     </style>
 </head>
 
-<body class="bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-200">
+<body
+    class="bg-white dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 antialiased selection:bg-primary-500 selection:text-white">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -96,82 +106,205 @@
             Event: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
             Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
             Menu: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>,
+            Zap: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+            Shield: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+            Rocket: () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
         };
 
         // --- PUBLIC COMPONENTS ---
 
         const Navbar = ({ onNavigate }) => (
-            <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto w-full">
-                <div className="flex items-center gap-2 font-bold text-xl cursor-pointer" onClick={() => onNavigate('landing')}>
-                    <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white">T</div>
-                    TrackFlow
-                </div>
-                <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
-                    <a href="#" className="hover:text-primary-600">Features</a>
-                    <a href="#" className="hover:text-primary-600">Pricing</a>
-                    <a href="#" className="hover:text-primary-600">Blog</a>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button onClick={() => onNavigate('login')} className="text-sm font-medium hover:text-primary-600">Sign in</button>
-                    <button onClick={() => onNavigate('register')} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">Start Free Trial</button>
+            <nav className="fixed w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 transition-all duration-300">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold text-xl cursor-pointer" onClick={() => onNavigate('landing')}>
+                        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
+                            <span className="text-sm font-bold">TF</span>
+                        </div>
+                        <span className="tracking-tight">TrackFlow</span>
+                    </div>
+                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
+                        <a href="#features" className="hover:text-primary-600 transition-colors">Features</a>
+                        <a href="#pricing" className="hover:text-primary-600 transition-colors">Pricing</a>
+                        <a href="#" className="hover:text-primary-600 transition-colors">Docs</a>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => onNavigate('login')} className="text-sm font-medium hover:text-primary-600 transition-colors">Sign in</button>
+                        <button onClick={() => onNavigate('register')} className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all hover:scale-105">Get Started</button>
+                    </div>
                 </div>
             </nav>
         );
 
         const LandingPage = ({ onNavigate }) => (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white pt-16">
                 <Navbar onNavigate={onNavigate} />
 
                 {/* Hero */}
-                <section className="pt-20 pb-32 px-6 text-center max-w-5xl mx-auto">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium mb-8 border border-primary-100">
-                        <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span></span>
-                        v2.0 is now live
-                    </div>
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white mb-6">
-                        Analytics for <span className="text-primary-600">modern teams</span>.
-                    </h1>
-                    <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10">
-                        From pageviews to payments, clicks to conversions. The only analytics platform you need to understand your users without compromising privacy.
-                    </p>
-                    <div className="flex justify-center gap-4 mb-16">
-                        <button onClick={() => onNavigate('register')} className="px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold text-lg transition-transform hover:scale-105 shadow-lg shadow-primary-500/20">Start Free Trial</button>
-                        <button onClick={() => onNavigate('login')} className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Live Demo</button>
-                    </div>
-                    <div className="relative mx-auto rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
-                        <img src="dashboard-mockup.png" alt="Dashboard Preview" className="w-full h-auto" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-50/50 dark:from-slate-900/50 to-transparent pointer-events-none"></div>
+                <section className="relative pt-20 pb-32 px-6 overflow-hidden">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary-500/20 blur-[100px] rounded-full pointer-events-none opacity-50"></div>
+
+                    <div className="max-w-5xl mx-auto text-center relative z-10">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            New: Custom Event Tracking is live
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight animate-fade-up" style={{ animationDelay: '0.2s' }}>
+                            Analytics for <span className="text-gradient">modern SaaS</span><br />
+                            that respects privacy.
+                        </h1>
+
+                        <p className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-12 animate-fade-up" style={{ animationDelay: '0.3s' }}>
+                            TrackFlow provides detailed insights without cookies. See active users, retention, and conversion funnels in real-time.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fade-up" style={{ animationDelay: '0.4s' }}>
+                            <button onClick={() => onNavigate('register')} className="w-full sm:w-auto px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-full font-bold text-lg transition-all hover:scale-105 shadow-xl shadow-primary-500/25">
+                                Start Free Trial
+                            </button>
+                            <button onClick={() => onNavigate('login')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-full font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                View Demo
+                            </button>
+                        </div>
+
+                        <div className="relative mx-auto max-w-6xl rounded-2xl shadow-2xl border-4 border-slate-900/5 bg-slate-900 overflow-hidden animate-fade-up" style={{ animationDelay: '0.6s' }}>
+                            <img src="dashboard-mockup.png" alt="TrackFlow Dashboard" className="w-full h-auto opacity-90" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent pointer-events-none"></div>
+                        </div>
                     </div>
                 </section>
 
                 {/* Features */}
-                <section className="py-24 bg-white dark:bg-slate-800/50">
-                    <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-12">
-                        <div className="text-left">
-                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-6"><Icons.Globe /></div>
-                            <h3 className="text-xl font-bold mb-3">Privacy First</h3>
-                            <p className="text-slate-500">GDPR compliant by default. No cookies, no IP tracking, just pure data ownership.</p>
+                <section id="features" className="py-24 bg-slate-50 dark:bg-slate-900/50">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to grow</h2>
+                            <p className="text-slate-500">Powerful features packed into a lightweight solution.</p>
                         </div>
-                        <div className="text-left">
-                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6"><Icons.Live /></div>
-                            <h3 className="text-xl font-bold mb-3">Real-time Data</h3>
-                            <p className="text-slate-500">See visitors as they arrive. Live view updates instantly with every page load and event.</p>
+
+                        <div className="grid md:grid-cols-3 gap-8">
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-6"><Icons.Globe /></div>
+                                <h3 className="text-xl font-bold mb-3">Privacy First</h3>
+                                <p className="text-slate-500 leading-relaxed">GDPR, CCPA, and PECR compliant by default. No cookies banners needed, no personal data harvested.</p>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-xl flex items-center justify-center mb-6"><Icons.Zap /></div>
+                                <h3 className="text-xl font-bold mb-3">Real-time Data</h3>
+                                <p className="text-slate-500 leading-relaxed">Watch visitors browse your site in real-time. See active sessions, current pages, and live events as they happen.</p>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-6"><Icons.Shield /></div>
+                                <h3 className="text-xl font-bold mb-3">Lightweight Script</h3>
+                                <p className="text-slate-500 leading-relaxed">Our script is less than 3KB. It loads asynchronously so your site speed is never compromised.</p>
+                            </div>
                         </div>
-                        <div className="text-left">
-                            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-6"><Icons.Code /></div>
-                            <h3 className="text-xl font-bold mb-3">Lightweight Script</h3>
-                            <p className="text-slate-500">Less than 2KB. Loads asynchrnously and never slows down your site performance.</p>
+                    </div>
+                </section>
+
+                {/* Trusted By (Mock) */}
+                <section className="py-12 border-y border-slate-100 dark:border-slate-800">
+                    <div className="max-w-7xl mx-auto px-6 text-center">
+                        <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-8">Trusted by modern teams</p>
+                        <div className="flex flex-wrap justify-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                            {/* Simple text logos for demo */}
+                            <span className="text-xl font-bold">ACME Corp</span>
+                            <span className="text-xl font-bold">Starlight</span>
+                            <span className="text-xl font-bold">Feather</span>
+                            <span className="text-xl font-bold">Bolt</span>
+                            <span className="text-xl font-bold">Spherule</span>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Pricing (Custom) */}
+                <section id="pricing" className="py-24">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, transparent pricing</h2>
+                            <p className="text-slate-500">Start for free, scale as you grow.</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                            {/* Hobby */}
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 relative">
+                                <h3 className="text-lg font-semibold mb-2">Hobby</h3>
+                                <div className="text-3xl font-bold mb-6">$0<span className="text-sm text-slate-500 font-normal">/mo</span></div>
+                                <ul className="space-y-4 mb-8 text-sm text-slate-600 dark:text-slate-400">
+                                    <li className="flex items-center gap-3"><Icons.Check /> 3,000 pageviews/mo</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> 1 Website</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> 24h Data Retention</li>
+                                </ul>
+                                <button onClick={() => onNavigate('register')} className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Start Free</button>
+                            </div>
+
+                            {/* Pro */}
+                            <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-8 rounded-2xl shadow-xl transform scale-105 relative z-10">
+                                <div className="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">POPULAR</div>
+                                <h3 className="text-lg font-semibold mb-2">Pro</h3>
+                                <div className="text-3xl font-bold mb-6">$19<span className="text-sm opacity-60 font-normal">/mo</span></div>
+                                <ul className="space-y-4 mb-8 text-sm opacity-90">
+                                    <li className="flex items-center gap-3"><Icons.Check /> 100,000 pageviews/mo</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> 10 Websites</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> Unlimited Data Retention</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> Custom Events</li>
+                                </ul>
+                                <button onClick={() => onNavigate('register')} className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-bold transition-colors shadow-lg shadow-primary-500/30">Get Started</button>
+                            </div>
+
+                            {/* Business */}
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 relative">
+                                <h3 className="text-lg font-semibold mb-2">Business</h3>
+                                <div className="text-3xl font-bold mb-6">$49<span className="text-sm text-slate-500 font-normal">/mo</span></div>
+                                <ul className="space-y-4 mb-8 text-sm text-slate-600 dark:text-slate-400">
+                                    <li className="flex items-center gap-3"><Icons.Check /> 1M+ pageviews/mo</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> Unlimited Websites</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> Priority Support</li>
+                                    <li className="flex items-center gap-3"><Icons.Check /> Funnel Analysis</li>
+                                </ul>
+                                <button onClick={() => onNavigate('register')} className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Contact Sales</button>
+                            </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Footer */}
-                <footer className="py-12 border-t border-slate-200 dark:border-slate-800 text-center text-slate-500 text-sm">
-                    <div className="flex items-center justify-center gap-2 font-bold text-xl text-slate-900 dark:text-white mb-4">
-                        <div className="w-6 h-6 bg-primary-600 rounded flex items-center justify-center text-white text-xs">T</div>
-                        TrackFlow
+                <footer className="py-12 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 text-sm">
+                    <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
+                        <div>
+                            <div className="flex items-center gap-2 font-bold text-xl mb-4">
+                                <span className="text-primary-600">TrackFlow</span>
+                            </div>
+                            <p className="text-slate-500">Privacy-friendly analytics for the modern web.</p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold mb-4">Product</h4>
+                            <ul className="space-y-2 text-slate-500">
+                                <li><a href="#" className="hover:text-primary-600">Features</a></li>
+                                <li><a href="#" className="hover:text-primary-600">Pricing</a></li>
+                                <li><a href="#" className="hover:text-primary-600">Changelog</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-bold mb-4">Resources</h4>
+                            <ul className="space-y-2 text-slate-500">
+                                <li><a href="#" className="hover:text-primary-600">Documentation</a></li>
+                                <li><a href="#" className="hover:text-primary-600">API Reference</a></li>
+                                <li><a href="#" className="hover:text-primary-600">Blog</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 className="font-bold mb-4">Company</h4>
+                            <ul className="space-y-2 text-slate-500">
+                                <li><a href="#" className="hover:text-primary-600">About</a></li>
+                                <li><a href="#" className="hover:text-primary-600">Legal</a></li>
+                                <li><a href="#" className="hover:text-primary-600">Contact</a></li>
+                            </ul>
+                        </div>
                     </div>
-                    <p>&copy; 2025 TrackFlow Analytics. All rights reserved.</p>
+                    <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-slate-400">
+                        &copy; 2025 TrackFlow Analytics. All rights reserved.
+                    </div>
                 </footer>
             </div>
         );
