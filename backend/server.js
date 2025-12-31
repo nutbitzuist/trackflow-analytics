@@ -466,6 +466,98 @@ app.get('/api/sites/:siteId/realtime', authenticateToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Error' }); }
 });
 
+// Get countries
+app.get('/api/sites/:siteId/countries', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        const { period = '30d', limit = 10 } = req.query;
+        const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+        const result = await query(`
+            SELECT country, city, COUNT(DISTINCT visitor_id) as visitors
+            FROM events
+            WHERE site_id = $1 AND event_type = 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days'
+            GROUP BY country, city ORDER BY visitors DESC LIMIT $2
+        `, [siteId, parseInt(limit)]);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Error' }); }
+});
+
+// Get devices
+app.get('/api/sites/:siteId/devices', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        const { period = '30d' } = req.query;
+        const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+        const deviceRes = await query(`
+            SELECT device_type, COUNT(DISTINCT visitor_id) as visitors
+            FROM events
+            WHERE site_id = $1 AND event_type = 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days'
+            GROUP BY device_type ORDER BY visitors DESC
+        `, [siteId]);
+
+        const browserRes = await query(`
+            SELECT browser, COUNT(DISTINCT visitor_id) as visitors
+            FROM events
+            WHERE site_id = $1 AND event_type = 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days'
+            GROUP BY browser ORDER BY visitors DESC
+        `, [siteId]);
+
+        const osRes = await query(`
+            SELECT os, COUNT(DISTINCT visitor_id) as visitors
+            FROM events
+            WHERE site_id = $1 AND event_type = 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days'
+            GROUP BY os ORDER BY visitors DESC
+        `, [siteId]);
+
+        res.json({ devices: deviceRes.rows, browsers: browserRes.rows, os: osRes.rows });
+    } catch (err) { res.status(500).json({ error: 'Error' }); }
+});
+
+// Get campaigns (UTM)
+app.get('/api/sites/:siteId/campaigns', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        const { period = '30d' } = req.query;
+        const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+        const result = await query(`
+            SELECT utm_source, utm_medium, utm_campaign, COUNT(DISTINCT visitor_id) as visitors, COUNT(*) as pageviews
+            FROM events
+            WHERE site_id = $1 AND event_type = 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days' 
+            AND (utm_source IS NOT NULL OR utm_campaign IS NOT NULL)
+            GROUP BY utm_source, utm_medium, utm_campaign ORDER BY visitors DESC
+        `, [siteId]);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Error' }); }
+});
+
+// Get custom events
+app.get('/api/sites/:siteId/events', authenticateToken, async (req, res) => {
+    if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
+
+    try {
+        const { siteId } = req.params;
+        const { period = '30d' } = req.query;
+        const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+        const result = await query(`
+            SELECT event_name, COUNT(*) as count, COUNT(DISTINCT visitor_id) as unique_users
+            FROM events
+            WHERE site_id = $1 AND event_type != 'pageview' AND timestamp >= NOW() - INTERVAL '${days} days'
+            GROUP BY event_name ORDER BY count DESC
+        `, [siteId]);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: 'Error' }); }
+});
+
 // Get revenue
 app.get('/api/sites/:siteId/revenue', authenticateToken, async (req, res) => {
     if (!(await checkSiteAccess(req.params.siteId, req.user.id))) return res.status(403).json({ error: 'Access denied' });
