@@ -20,9 +20,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-change-in-prod';
 
-// Middleware
-app.use(cors());
+// Middleware - Enhanced CORS for cross-origin tracking
+app.use(cors({
+    origin: '*', // Allow all origins for tracking
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
+}));
 app.use(express.json());
+
+// Handle preflight requests for /collect endpoint
+app.options('/collect', cors());
 
 // Initialize PostgreSQL Pool
 const pool = new Pool({

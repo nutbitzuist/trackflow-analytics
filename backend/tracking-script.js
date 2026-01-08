@@ -14,7 +14,7 @@
 
     // Configuration
     const config = {
-        endpoint: 'https://api.trackflow.io/collect', // Replace with your API endpoint
+        endpoint: null, // Will be auto-detected from script src
         siteId: null,
         trackPageviews: true,
         trackOutboundLinks: true,
@@ -22,7 +22,8 @@
         trackSearchQueries: true,
         respectDNT: true,
         hashMode: false, // For SPAs using hash routing
-        debug: false
+        debug: false,
+        trackLocalhost: false // Set to true to track localhost (for testing)
     };
 
     // Utility functions
@@ -69,9 +70,9 @@
             return false;
         }
         
-        // Don't track localhost by default
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            log('Localhost detected, skipping');
+        // Don't track localhost by default (unless explicitly enabled)
+        if (!config.trackLocalhost && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+            log('Localhost detected, skipping (set data-track-localhost="true" to enable)');
             return false;
         }
         
@@ -349,11 +350,28 @@
         if (script) {
             config.siteId = script.getAttribute('data-site');
             
+            // Auto-detect endpoint from script src if not explicitly set
+            if (!config.endpoint) {
+                const scriptSrc = script.src || script.getAttribute('src');
+                if (scriptSrc) {
+                    try {
+                        const scriptUrl = new URL(scriptSrc);
+                        config.endpoint = `${scriptUrl.origin}/collect`;
+                    } catch (e) {
+                        // If URL parsing fails, try relative path
+                        config.endpoint = '/collect';
+                    }
+                } else {
+                    config.endpoint = '/collect';
+                }
+            }
+            
             // Optional config from attributes
             if (script.getAttribute('data-track-outbound') === 'false') config.trackOutboundLinks = false;
             if (script.getAttribute('data-track-downloads') === 'false') config.trackDownloads = false;
             if (script.getAttribute('data-hash-mode') === 'true') config.hashMode = true;
             if (script.getAttribute('data-debug') === 'true') config.debug = true;
+            if (script.getAttribute('data-track-localhost') === 'true') config.trackLocalhost = true;
             if (script.getAttribute('data-endpoint')) config.endpoint = script.getAttribute('data-endpoint');
         }
 
